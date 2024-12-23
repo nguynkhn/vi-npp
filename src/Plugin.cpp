@@ -2,6 +2,7 @@
 #include "ViNpp.h"
 
 void Plugin::CommandInit() {
+	AddCommand(0, TEXT("Enable Vi mode"), []() { vi.Toggle(); }, vi.enabled, NULL);
 }
 
 void Plugin::AddCommand(size_t index, TCHAR *name, PFUNCPLUGINCMD func, bool check, ShortcutKey *shortcut) {
@@ -12,8 +13,14 @@ void Plugin::AddCommand(size_t index, TCHAR *name, PFUNCPLUGINCMD func, bool che
 	funcItems[index]._pShKey = shortcut;
 }
 
-void Plugin::SendMessage(UINT msg, WPARAM wParam, LPARAM lParam) {
-	::SendMessage(handle, msg, wParam, lParam);
+void Plugin::InitScintilla(HWND _handle) {
+	handle = _handle;
+	directFunc = (SciFnDirect)::SendMessage(handle, SCI_GETDIRECTFUNCTION, 0, 0);
+	directPointer = ::SendMessage(handle, SCI_GETDIRECTPOINTER, 0, 0);
+}
+
+sptr_t Plugin::CallScintilla(unsigned int message, uptr_t wParam, sptr_t lParam) {
+	return directFunc(directPointer, message, wParam, lParam);
 }
 
 BOOL WINAPI DllMain(HINSTANCE /*hinstDLL*/, DWORD fdwReason, LPVOID /*lpvReserved*/) {
@@ -34,12 +41,10 @@ BOOL WINAPI DllMain(HINSTANCE /*hinstDLL*/, DWORD fdwReason, LPVOID /*lpvReserve
 }
 
 extern "C" __declspec(dllexport) void setInfo(NppData nppData) {
-	// get handle
-	int which = -1;
+	int which = 0;
 	::SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&which);
 
-	if (which == -1) return;
-	plugin.handle = (which == 0) ? nppData._scintillaMainHandle : nppData._scintillaSecondHandle;
+	plugin.InitScintilla(which == 0 ? nppData._scintillaMainHandle : nppData._scintillaSecondHandle);
 
 	plugin.CommandInit();
 }
@@ -53,7 +58,8 @@ extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int *nbF) {
 	return plugin.funcItems;
 }
 
-extern "C" __declspec(dllexport) void beNotified(SCNotification *) {}
+extern "C" __declspec(dllexport) void beNotified(SCNotification *) {
+}
 
 extern "C" __declspec(dllexport) LRESULT messageProc(UINT, WPARAM, LPARAM) {
 	return TRUE;

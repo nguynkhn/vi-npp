@@ -1,4 +1,8 @@
-#ifndef VI_NPP_H
-#define VI_NPP_H
+#pragma once
 
-#endif	// VI_NPP_H
+static struct Vi {
+	bool enabled;
+
+	void Toggle();
+} vi;
+
