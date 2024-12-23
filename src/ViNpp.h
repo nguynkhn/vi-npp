@@ -1,8 +1,7 @@
 #pragma once
 
-static struct Vi {
+extern struct Vi {
 	bool enabled;
 
 	void Toggle();
 } vi;
-
