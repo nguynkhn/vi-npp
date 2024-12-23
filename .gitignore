@@ -1,0 +1,11 @@
+*.sdf
+*.sln
+*.suo
+bin/
+bin64/
+arm64/
+vs.proj/*
+!vs.proj/ViNpp.vcxproj
+*.aps
+*.zip
+*.bak
