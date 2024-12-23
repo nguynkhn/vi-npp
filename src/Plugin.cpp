@@ -1,4 +1,5 @@
 #include "Plugin.h"
+#include "ViNpp.h"
 
 void Plugin::CommandInit() {
 }
