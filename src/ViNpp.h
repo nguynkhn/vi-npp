@@ -1,7 +1,12 @@
 #pragma once
 
+enum ViMode { NORMAL, INSERT };
+
 extern struct Vi {
 	bool enabled;
+	ViMode mode;
 
-	void Toggle();
+	void SetMode(ViMode);
 } vi;
+
+void ToggleVi();

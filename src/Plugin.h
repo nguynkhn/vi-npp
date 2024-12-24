@@ -8,14 +8,12 @@
 extern struct Plugin {
 	FuncItem funcItems[PLUGIN_COMMAND_COUNT];
 
-	HWND nppHandle;
+	NppData nppData;
 	SciFnDirect directFunc;
 	sptr_t directPointer;
 
-	void PluginInit();
-	void PluginCleanup();
-
-	void CommandInit();
+	void InitHandle();
+	void InitCommand();
 	void AddCommand(size_t, TCHAR *, PFUNCPLUGINCMD, bool, ShortcutKey *);
 
 	sptr_t CallNotepadPP(unsigned int, uptr_t, sptr_t);

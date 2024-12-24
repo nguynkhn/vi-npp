@@ -3,8 +3,19 @@
 
 Plugin plugin = {0};
 
-void Plugin::CommandInit() {
-	AddCommand(0, TEXT("Enable Vi mode"), []() { vi.Toggle(); }, vi.enabled, NULL);
+void Plugin::InitHandle() {
+	int which = 0;
+	::SendMessage(plugin.nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&which);
+
+	HWND scintillaHandle = which == 0
+		? plugin.nppData._scintillaMainHandle
+		: plugin.nppData._scintillaSecondHandle;
+	plugin.directFunc = (SciFnDirect)::SendMessage(scintillaHandle, SCI_GETDIRECTFUNCTION, 0, 0);
+	plugin.directPointer = ::SendMessage(scintillaHandle, SCI_GETDIRECTPOINTER, 0, 0);
+}
+
+void Plugin::InitCommand() {
+	AddCommand(0, TEXT("Enable Vi mode"), ToggleVi, vi.enabled, NULL);
 }
 
 void Plugin::AddCommand(size_t index, TCHAR *name, PFUNCPLUGINCMD func, bool check, ShortcutKey *shortcut) {
@@ -16,41 +27,22 @@ void Plugin::AddCommand(size_t index, TCHAR *name, PFUNCPLUGINCMD func, bool che
 }
 
 sptr_t Plugin::CallNotepadPP(unsigned int message, uptr_t wParam, sptr_t lParam) {
-	return ::SendMessage(nppHandle, message, wParam, lParam);
+	return ::SendMessage(nppData._nppHandle, message, wParam, lParam);
 }
 
 sptr_t Plugin::CallScintilla(unsigned int message, uptr_t wParam, sptr_t lParam) {
 	return directFunc(directPointer, message, wParam, lParam);
 }
 
-BOOL WINAPI DllMain(HINSTANCE /*hinstDLL*/, DWORD fdwReason, LPVOID /*lpvReserved*/) {
-	try {
-		switch (fdwReason) {
-			case DLL_PROCESS_ATTACH:
-				// plugin.PluginInit();
-				break;
-			case DLL_PROCESS_DETACH:
-				// plugin.PluginCleanup();
-				break;
-		}
-	} catch (...) {
-		return FALSE;
-	}
-
+BOOL WINAPI DllMain(HINSTANCE, DWORD, LPVOID) {
 	return TRUE;
 }
 
 extern "C" __declspec(dllexport) void setInfo(NppData nppData) {
-	plugin.nppHandle = nppData._nppHandle;
+	plugin.nppData = nppData;
 
-	int which = 0;
-	::SendMessage(plugin.nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&which);
-
-	HWND scintillaHandle = which == 0 ? nppData._scintillaMainHandle : nppData._scintillaSecondHandle;
-	plugin.directFunc = (SciFnDirect)::SendMessage(scintillaHandle, SCI_GETDIRECTFUNCTION, 0, 0);
-	plugin.directPointer = ::SendMessage(scintillaHandle, SCI_GETDIRECTPOINTER, 0, 0);
-
-	plugin.CommandInit();
+	plugin.InitHandle();
+	plugin.InitCommand();
 }
 
 extern "C" __declspec(dllexport) const TCHAR * getName() {
